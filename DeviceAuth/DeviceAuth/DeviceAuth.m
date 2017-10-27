@@ -8,14 +8,14 @@
 
 #import "DeviceAuth.h"
 
-@implementation DeviceAuth
+LAContext *__context;
 
+@implementation DeviceAuth
 
 + (BOOL)isSupportBiometrics
 {
     if (NSClassFromString(@"LAContext") != nil) {
-        LAContext *context = [[LAContext alloc] init];
-        return [context canEvaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics error:NULL];
+        return [[self shareContext] canEvaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics error:NULL];
     }
     return NO;
 }
@@ -23,8 +23,7 @@
 + (BOOL)isSupportDeviceOwnerAuth
 {
     if (@available(iOS 9.0, *)) {
-        LAContext *context = [[LAContext alloc] init];
-        return [context canEvaluatePolicy:LAPolicyDeviceOwnerAuthentication error:NULL];
+        return [[self shareContext] canEvaluatePolicy:LAPolicyDeviceOwnerAuthentication error:NULL];
     } else {
         // Fallback on earlier versions
         return NO;
@@ -39,7 +38,7 @@
         return;
     }
     
-    LAContext *context = [[LAContext alloc] init];
+    LAContext *context = [self shareContext];
     if (nil == des) {
         if ([self isSupportBiometrics]) {
             
@@ -78,6 +77,14 @@
         });
     }];
     
+}
+
++ (LAContext *)shareContext
+{
+    if (nil == __context) {
+        __context = [[LAContext alloc] init];
+    }
+    return __context;
 }
 
 @end
