@@ -29,7 +29,7 @@
     return NO;
 }
 
-+ (void)authDeviceWithDes:(nullable NSString *)des result:(authResult)result
++ (void)authDeviceWithDes:(NSString *)des result:(authResult)result
 {
     if (![self isOpenDeviceLock]) {
         result(NO, -1000, @"未开启设备锁"); // If passcode is not enabled, policy evaluation will fail.
