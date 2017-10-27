@@ -6,7 +6,6 @@
 //  Copyright © 2017年 qm. All rights reserved.
 //  一般用于登录，支付等。首先验证指纹（iPhone X 面容ID），失败时可以选择输入设备密码
 
-#import <UIKit/UIKit.h>
 #import <LocalAuthentication/LocalAuthentication.h>
 
 @interface DeviceAuth : NSObject
