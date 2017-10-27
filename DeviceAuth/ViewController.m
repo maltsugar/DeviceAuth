@@ -16,6 +16,9 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
+    
+    
     [DeviceAuth authDeviceWithDes:nil result:^(BOOL success, LAError error, NSString *errorDes) {
         if (success) {
             NSLog(@"成功");
