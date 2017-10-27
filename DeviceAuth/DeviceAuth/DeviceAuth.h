@@ -12,6 +12,8 @@
 
 typedef void (^authResult)(BOOL success, LAError error, NSString *errorDes);
 
++ (LAContext *)shareContext;
+
 // 是否支持生物学识别（TouchID 面容ID）
 + (BOOL)isSupportBiometrics;
 
