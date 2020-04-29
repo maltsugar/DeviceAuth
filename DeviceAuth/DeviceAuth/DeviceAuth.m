@@ -39,6 +39,8 @@ LAContext *__context;
     }
     
     LAContext *context = [self shareContext];
+    LAPolicy policy = LAPolicyDeviceOwnerAuthenticationWithBiometrics;
+    
     if (nil == des) {
         if ([self isSupportBiometrics]) {
             
@@ -57,15 +59,14 @@ LAContext *__context;
         }else
         {
             des = @"验证设备密码";
+            if (@available(iOS 9.0, *)) {
+                policy = LAPolicyDeviceOwnerAuthentication;
+            }
         }
     }
     
+       
     
-    // 8.0使用指纹验证
-    LAPolicy policy = LAPolicyDeviceOwnerAuthenticationWithBiometrics;
-    if (@available(iOS 9.0, *)) {
-        policy = LAPolicyDeviceOwnerAuthentication;
-    }
     
     [context evaluatePolicy:policy localizedReason:des reply:^(BOOL success, NSError *error) {
         dispatch_async(dispatch_get_main_queue(), ^{
