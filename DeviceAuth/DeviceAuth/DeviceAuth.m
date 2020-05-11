@@ -10,20 +10,37 @@
 
 LAContext *__context;
 
+NSError *checkError;
+
 @implementation DeviceAuth
 
 + (BOOL)isSupportBiometrics
 {
+    checkError = nil;
     if (NSClassFromString(@"LAContext") != nil) {
-        return [[self shareContext] canEvaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics error:NULL];
+        NSError *error;
+        BOOL flag = [[self shareContext] canEvaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics error:&error];
+        if (error) {
+            checkError = error;
+            NSLog(@"%@", error.localizedDescription);
+        }
+        
+        return flag;
     }
     return NO;
 }
 
 + (BOOL)isSupportDeviceOwnerAuth
 {
+    checkError = nil;
     if (@available(iOS 9.0, *)) {
-        return [[self shareContext] canEvaluatePolicy:LAPolicyDeviceOwnerAuthentication error:NULL];
+        NSError * error;
+        BOOL flag = [[self shareContext] canEvaluatePolicy:LAPolicyDeviceOwnerAuthentication error:&error];
+        if (error) {
+            checkError = error;
+            NSLog(@"%@", error.localizedDescription);
+        }
+        return flag;
     } else {
         // Fallback on earlier versions
         return NO;
@@ -33,50 +50,59 @@ LAContext *__context;
 
 + (void)authDeviceWithDes:(NSString *)des result:(authResult)result
 {
+    
     if (![self isSupportBiometrics]) {
-        result(NO, -1000, @"不支持这种验证方式");
-        return;
-    }
-    
-    LAContext *context = [self shareContext];
-    LAPolicy policy = LAPolicyDeviceOwnerAuthenticationWithBiometrics;
-    
-    if (nil == des) {
-        if ([self isSupportBiometrics]) {
-            
-            if (@available(iOS 11.0, *)) {
-                if (context.biometryType == LABiometryTypeFaceID) {
-                    des = @"验证面容ID";
-                }
-                if (context.biometryType == LABiometryTypeTouchID) {
-                    des = @"验证Touch ID";
-                }
-                
-            } else {
-                // Fallback on earlier versions
-                des = @"验证Touch ID";
-            }
-        }else
-        {
-            des = @"验证设备密码";
-            if (@available(iOS 9.0, *)) {
-                policy = LAPolicyDeviceOwnerAuthentication;
+        NSString *tip = @"暂不支持";
+        if (checkError) {
+            NSLog(@"%@", checkError);
+            if (checkError.code == -8) {
+                tip = @"超出尝试次数，需要您使用密码解锁设备一次";
+                des = tip;
             }
         }
     }
     
-       
-    
-    
-    [context evaluatePolicy:policy localizedReason:des reply:^(BOOL success, NSError *error) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if (success) {
-                result(YES, error.code, error.localizedDescription);
-            } else {
-                result(NO, error.code, error.localizedDescription);
+    LAContext *context = [self shareContext];
+    if (@available(iOS 9.0, *)) {
+        LAPolicy policy = LAPolicyDeviceOwnerAuthentication;
+        
+        if (nil == des) {
+            if ([self isSupportDeviceOwnerAuth]) {
+                
+                if (@available(iOS 11.0, *)) {
+                    if (context.biometryType == LABiometryTypeFaceID) {
+                        des = @"验证面容ID";
+                    }
+                    if (context.biometryType == LABiometryTypeTouchID) {
+                        des = @"验证Touch ID";
+                    }
+                    
+                } else {
+                    // Fallback on earlier versions
+                    des = @"验证Touch ID";
+                }
+            }else
+            {
+                des = @"验证设备密码";
             }
-        });
-    }];
+        }
+        
+        
+        
+        
+        [context evaluatePolicy:policy localizedReason:des reply:^(BOOL success, NSError *error) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (success) {
+                    result(YES, error.code, error.localizedDescription);
+                } else {
+                    result(NO, error.code, error.localizedDescription);
+                }
+            });
+        }];
+    } else {
+        // Fallback on earlier versions
+        NSLog(@"暂不支持iOS9以下");
+    }
     
 }
 
