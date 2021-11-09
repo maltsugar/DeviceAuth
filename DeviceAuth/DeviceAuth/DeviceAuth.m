@@ -147,6 +147,7 @@ static DeviceAuth *_instance;
         NSLog(@"暂不支持iOS9以下");
     }
     
+    
 }
 
 + (LAContext *)systemContext
