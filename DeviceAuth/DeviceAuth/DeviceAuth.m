@@ -14,12 +14,55 @@ NSError *checkError;
 
 @implementation DeviceAuth
 
+
+
+static DeviceAuth *_instance;
++ (id)allocWithZone:(struct _NSZone *)zone
+{
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        _instance = [super allocWithZone:zone];
+    });
+    
+    return _instance;
+}
+
++ (instancetype)defaultChecker
+{
+    if (_instance == nil) {
+        _instance = [[DeviceAuth alloc] init];
+        [_instance initConfig];
+    }
+    return _instance;
+}
+
+- (void)initConfig
+{
+    //系统api有问题 直接 [OwnChecker systemContext].biometryType  都返回none
+    // 需要先调一下下面的
+    
+    BOOL flag0 = [DeviceAuth isSupportDeviceOwnerAuth];
+    BOOL flag1 = [DeviceAuth isSupportBiometrics];
+    NSLog(@"ownerAuth: %d,  Biometrics: %d", flag0, flag1); // 系统API 有bug 先调用一下
+    
+    self.bioType = DABiometryTypeNone;
+    if (@available(iOS 11.0, *)) {
+        if ([DeviceAuth systemContext].biometryType == LABiometryTypeTouchID) {
+            self.bioType = DABiometryTypeTouchID;
+        }
+        if ([DeviceAuth systemContext].biometryType == LABiometryTypeFaceID) {
+            self.bioType = DABiometryTypeFaceID;
+        }
+    }
+}
+
+
 + (BOOL)isSupportBiometrics
 {
     checkError = nil;
     if (NSClassFromString(@"LAContext") != nil) {
         NSError *error;
-        BOOL flag = [[self shareContext] canEvaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics error:&error];
+        BOOL flag = [[self systemContext] canEvaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics error:&error];
         if (error) {
             checkError = error;
             NSLog(@"%@", error.localizedDescription);
@@ -35,7 +78,7 @@ NSError *checkError;
     checkError = nil;
     if (@available(iOS 9.0, *)) {
         NSError * error;
-        BOOL flag = [[self shareContext] canEvaluatePolicy:LAPolicyDeviceOwnerAuthentication error:&error];
+        BOOL flag = [[self systemContext] canEvaluatePolicy:LAPolicyDeviceOwnerAuthentication error:&error];
         if (error) {
             checkError = error;
             NSLog(@"%@", error.localizedDescription);
@@ -62,7 +105,7 @@ NSError *checkError;
         }
     }
     
-    LAContext *context = [self shareContext];
+    LAContext *context = [self systemContext];
     if (@available(iOS 9.0, *)) {
         LAPolicy policy = LAPolicyDeviceOwnerAuthentication;
         
@@ -106,7 +149,7 @@ NSError *checkError;
     
 }
 
-+ (LAContext *)shareContext
++ (LAContext *)systemContext
 {
     if (nil == __context) {
         __context = [[LAContext alloc] init];

@@ -8,11 +8,21 @@
 
 #import <LocalAuthentication/LocalAuthentication.h>
 
-@interface DeviceAuth : NSObject
 
 typedef void (^authResult)(BOOL success, LAError error, NSString *errorDes);
 
-+ (LAContext *)shareContext;
+typedef NS_ENUM(NSUInteger, DABiometryType) {
+    DABiometryTypeNone,
+    DABiometryTypeTouchID,
+    DABiometryTypeFaceID,
+};
+
+
+@interface DeviceAuth : NSObject
+
+
+
++ (LAContext *)systemContext;
 
 // 是否支持生物学识别（TouchID 面容ID）
 + (BOOL)isSupportBiometrics;
@@ -27,6 +37,11 @@ typedef void (^authResult)(BOOL success, LAError error, NSString *errorDes);
  @param result 验证结果
  */
 + (void)authDeviceWithDes:(NSString *)des result:(authResult)result;
+
+
++ (instancetype)defaultChecker;
+
+@property (nonatomic, assign) DABiometryType bioType;
 
 
 @end
